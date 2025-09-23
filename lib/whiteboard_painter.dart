@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'draw_point.dart';
-import 'detected_square.dart';
 
 class WhiteboardPainter extends CustomPainter {
   final List<DrawPoint?> points;
-  final List<DetectedSquare> squares;
 
-  WhiteboardPainter(this.points, [this.squares = const []]);
+  WhiteboardPainter(this.points);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -18,13 +16,6 @@ class WhiteboardPainter extends CustomPainter {
           ..strokeWidth = points[i]!.strokeWidth;
         canvas.drawLine(points[i]!.offset, points[i + 1]!.offset, paint);
       }
-    }
-    for (var square in squares) {
-      Paint paint = Paint()
-        ..color = square.color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4.0;
-      canvas.drawRect(square.rect, paint);
     }
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'draw_point.dart';
-import 'detected_square.dart';
 import 'whiteboard_painter.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
@@ -18,58 +17,19 @@ class WhiteboardScreen extends StatefulWidget {
 }
 
 class _WhiteboardScreenState extends State<WhiteboardScreen> {
-  DetectedSquare? _tryDetectSquare(List<DrawPoint> stroke) {
-    if (stroke.length < 20) return null;
-    double minX = stroke.first.offset.dx;
-    double maxX = stroke.first.offset.dx;
-    double minY = stroke.first.offset.dy;
-    double maxY = stroke.first.offset.dy;
-    for (var p in stroke) {
-      if (p.offset.dx < minX) minX = p.offset.dx;
-      if (p.offset.dx > maxX) maxX = p.offset.dx;
-      if (p.offset.dy < minY) minY = p.offset.dy;
-      if (p.offset.dy > maxY) maxY = p.offset.dy;
-    }
-    double width = maxX - minX;
-    double height = maxY - minY;
-    if ((width - height).abs() < 15 && width > 30 && height > 30) {
-      int countOnPerimeter = 0;
-      for (var p in stroke) {
-        bool onLeft = (p.offset.dx - minX).abs() < 15;
-        bool onRight = (p.offset.dx - maxX).abs() < 15;
-        bool onTop = (p.offset.dy - minY).abs() < 15;
-        bool onBottom = (p.offset.dy - maxY).abs() < 15;
-        if ((onLeft || onRight) && (onTop || onBottom)) countOnPerimeter++;
-      }
-      if (countOnPerimeter > stroke.length * 0.7) {
-        return DetectedSquare(
-          Rect.fromLTWH(minX, minY, width, height),
-          _selectedColor,
-        );
-      }
-    }
-    return null;
-  }
-
   String? _figureMessage;
   double _lastPressure = 1.0;
   bool _showPressure = false;
   final GlobalKey _paintKey = GlobalKey();
   final GlobalKey _boundaryKey = GlobalKey();
   final List<DrawPoint?> _points = [];
-  final List<DetectedSquare> _squares = [];
   Color _selectedColor = Colors.black;
   final List<Color> _colors = [
-    Colors.black,
-    Colors.red,
-    Colors.green,
-    Colors.blue,
-    Colors.orange,
-    Colors.purple,
-    Colors.brown,
-    Colors.pink,
-    Colors.yellow,
-    Colors.cyan,
+    Colors.black, // Mejor para OCR
+    Colors.blue.shade800, // Azul oscuro - buena legibilidad
+    Colors.red.shade700, // Rojo oscuro - visible pero legible
+    Colors.green.shade700, // Verde oscuro - mejor contraste
+    Colors.indigo.shade800, // Índigo - excelente para texto
   ];
 
   @override
@@ -134,34 +94,14 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
                       },
                       onPointerUp: (event) {
                         setState(() {
-                          List<DrawPoint> stroke = [];
-                          int i = _points.length - 1;
-                          while (i >= 0 && _points[i] != null) {
-                            stroke.insert(0, _points[i]!);
-                            i--;
-                          }
-                          if (stroke.length >= 10) {
-                            final square = _tryDetectSquare(stroke);
-                            if (square != null) {
-                              _points.removeRange(i + 1, _points.length);
-                              _squares.add(square);
-                              _figureMessage = '¡Cuadrado detectado!';
-                              Future.delayed(const Duration(seconds: 2), () {
-                                if (mounted) {
-                                  setState(() => _figureMessage = null);
-                                }
-                              });
-                            } else {
-                              _points.add(null);
-                            }
-                          } else {
-                            _points.add(null);
-                          }
+                          // Simplemente agregamos un separador null para terminar el trazo
+                          // Sin detección de cuadrados para optimizar OCR
+                          _points.add(null);
                         });
                       },
                       child: CustomPaint(
                         key: _paintKey,
-                        painter: WhiteboardPainter(_points, _squares),
+                        painter: WhiteboardPainter(_points),
                         size: Size.infinite,
                       ),
                     ),
@@ -252,7 +192,6 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
             onPressed: () {
               setState(() {
                 _points.clear();
-                _squares.clear();
               });
             },
             tooltip: 'Limpiar pizarra',
