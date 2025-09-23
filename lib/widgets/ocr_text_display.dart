@@ -13,7 +13,7 @@ class OcrTextDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 120,
+      height: 100, // Reducido de 120 a 100
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,

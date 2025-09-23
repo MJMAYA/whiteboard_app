@@ -1,4 +1,23 @@
-# Pizarra Interactiva - Whiteboard App
+# Pizarra I### � Exportación de Dataset para Machine Learning
+- **Captura automática**: Guarda imagen de pizarra + texto de significado real
+- **Formato CSV**: Dataset estructurado con timestamp, nombres de archivo y textos
+- **Almacenamiento local**: Directorio `E:\temp\whiteboard_dataset`
+- **Estructura organizada**: 
+  - `whiteboard_dataset.csv` - Archivo principal con metadatos
+  - `images/` - Carpeta con imágenes PNG numeradas por timestamp
+- **Botón inteligente**: Solo se activa cuando hay dibujo y significado escrito
+- **Auto-limpieza**: Limpia la pizarra automáticamente después de guardar exitosamente
+- **Contador de muestras**: Muestra número actual de muestras en el dataset
+
+### �📝 Reconocimiento de Texto (OCR) con Doble Textarea
+- **Captura de pantalla**: Convierte el contenido de la pizarra en imagen PNG
+- **Textarea OCR**: Área dedicada para mostrar el texto reconocido automáticamente
+- **Textarea Significado**: Campo editable para escribir el significado real de lo dibujado
+- **Gestión independiente**: Cada textarea tiene su propio botón de limpieza
+- **Limpieza total**: El botón principal limpia pizarra y ambos textareas
+- **Compatibilidad multiplataforma**: 
+  - **Web**: Envío directo de bytes via multipart
+  - **Desktop/Móvil**: Guardado temporal de archivosva - Whiteboard App
 
 Una aplicación de pizarra digital inteligente desarrollada con Flutter que permite dibujar, detectar formas geométricas y reconocer texto manuscrito usando tecnologías de visión por computadora y OCR.
 
@@ -21,15 +40,22 @@ Una aplicación de pizarra digital inteligente desarrollada con Flutter que perm
 ### 🛠️ Herramientas de Control
 
 #### Botones Flotantes Organizados:
-1. **Limpiar Pizarra** (🗑️): Borra todos los trazos dibujados
+1. **Limpiar Pizarra** (🗑️): Borra todos los trazos dibujados y ambos textareas
 2. **Monitor de Presión** (👁️): Activa/desactiva indicador de presión en tiempo real
 3. **Reconocimiento de Texto** (📝): Ejecuta OCR y muestra resultado en textarea
 
-### 💻 Interfaz Mejorada
+#### Botón de Dataset:
+4. **Guardar en Dataset** (💾): Exporta imagen + significado real al CSV de entrenamiento
+
+### 💻 Interfaz Mejorada con Doble Textarea
 - **Área de dibujo expandida**: Ocupa la mayor parte de la pantalla
-- **Textarea responsivo**: 120px de altura fija con scroll interno
+- **Doble sistema de texto**: 
+  - **Textarea OCR**: Solo lectura, muestra texto detectado automáticamente
+  - **Textarea Significado**: Campo editable para escribir interpretación personal
+- **Textareas responsivos**: 100px de altura cada uno con scroll interno
 - **Paleta de colores**: Selector visual mejorado con efectos de selección
 - **Organización modular**: Código separado en widgets especializados
+- **Limpieza integral**: Un botón limpia todo (dibujo + ambos textos)
 
 ## 🏗️ Arquitectura del Proyecto
 
@@ -40,10 +66,14 @@ lib/
 ├── whiteboard_screen.dart       # Pantalla principal (refactorizada y optimizada)
 ├── whiteboard_painter.dart      # CustomPainter para renderizado de trazos
 ├── draw_point.dart              # Modelo para puntos de dibujo
-└── widgets/                     # Widgets modulares reutilizables
-    ├── ocr_text_display.dart    # Textarea para mostrar texto OCR
+├── widgets/                     # Widgets modulares reutilizables
+    ├── ocr_text_display.dart    # Textarea solo lectura para texto OCR
+    ├── meaning_text_input.dart  # Campo editable para significado real
     ├── color_palette.dart       # Selector de colores optimizado
-    └── whiteboard_action_buttons.dart # Botones flotantes organizados
+    ├── whiteboard_action_buttons.dart # Botones flotantes organizados
+    └── dataset_export_button.dart # Botón para exportar al dataset
+├── services/                    # Servicios de la aplicación
+    └── dataset_exporter.dart    # Manejo de exportación a CSV y archivos
 ```
 
 ### Clases Principales
@@ -54,11 +84,33 @@ lib/
 - **Handlers especializados**: Métodos dedicados para eventos de puntero
 - **UI organizada**: Widgets separados por responsabilidad
 
-#### `OcrTextDisplay`
-- **Textarea dedicado**: Área específica para mostrar texto reconocido
-- **Interfaz limpia**: Header con título y botón de limpieza
+#### `DatasetExporter` (Nuevo)
+- **Gestión de archivos**: Crea directorios y maneja almacenamiento local
+- **Formato CSV**: Estructura de datos compatible con frameworks de ML
+- **Nomenclatura única**: Timestamps para evitar colisiones de archivos
+- **Escapado CSV**: Manejo correcto de comas y comillas en texto
+- **Metadatos completos**: Timestamp, rutas, textos OCR y real
+
+#### `DatasetExportButton` (Nuevo)
+- **Interfaz intuitiva**: Botón que muestra estado del dataset
+- **Validación inteligente**: Solo se activa con contenido válido
+- **Feedback visual**: Animaciones y notificaciones de éxito/error
+- **Contador dinámico**: Muestra número actual de muestras
+- **Estado de carga**: Indicador visual durante el procesamiento
+
+#### `MeaningTextInput` (Actualizado)
+- **Campo de texto editable**: Permite escribir el significado real del dibujo
+- **Interfaz interactiva**: Header distintivo con color azul
+- **Autoguardado**: Actualiza el estado en tiempo real mientras escribes
+- **Botón de limpieza**: Icono X para borrar el contenido individualmente
+- **Placeholder inteligente**: Texto de guía cuando está vacío
+
+#### `OcrTextDisplay` (Actualizado)
+- **Solo lectura**: Área específica para mostrar texto OCR detectado
+- **Interfaz diferenciada**: Header gris para distinguir del campo editable
 - **Scroll automático**: Manejo de texto largo
 - **Estados visuales**: Diferentes estilos para texto vacío y con contenido
+- **Botón de limpieza**: Solo visible cuando hay contenido
 
 #### `ColorPalette`
 - **Selector optimizado**: Paleta de colores específica para OCR
@@ -113,21 +165,46 @@ La aplicación espera un servidor HTTP en `localhost:1688` que:
 - Reciba archivos multipart con campo `the_file`
 - Retorne JSON con formato: `{"result": "texto_reconocido"}`
 
-## 🎯 Casos de Uso
+## 🎯 **Casos de Uso Ampliados**
 
-1. **Educación**: Pizarra digital para clases remotas o presenciales
-2. **Diseño**: Bocetos rápidos con detección automática de formas
-3. **Notas**: Escritura a mano con conversión a texto digital
-4. **Presentaciones**: Herramienta interactiva para explicaciones visuales
+### 🔬 **Investigación y Desarrollo de IA**
+- **Generación de datasets**: Crear conjuntos de datos para entrenar modelos OCR
+- **Evaluación de precisión**: Comparar OCR automático vs interpretación humana
+- **Análisis de patrones**: Estudiar diferencias entre texto detectado y significado real
 
-## 🔄 Flujo de Trabajo
+### 📚 **Educación y Formación**
+- **Práctica de escritura**: Mejorar caligrafía observando resultados de OCR
+- **Aprendizaje de IA**: Entender cómo funcionan los sistemas de reconocimiento
+- **Creación de contenido**: Generar material educativo con ejemplos reales
 
-1. **Dibujo**: El usuario dibuja con el dedo/stylus
-2. **Captura**: Sistema captura posición, presión y color
-3. **Renderizado**: WhiteboardPainter dibuja trazos en tiempo real
-4. **Detección**: Algoritmo analiza trazos para identificar formas
-5. **OCR**: Botón de texto convierte dibujos en texto reconocible
-6. **Gestión**: Herramientas de limpieza y configuración
+### 💼 **Aplicaciones Profesionales**
+- **Prototipado de interfaces**: Bocetos con interpretación automática
+- **Documentación visual**: Capturar ideas con contexto textual
+- **Control de calidad**: Validar sistemas OCR con datos reales
+
+## 🔄 Flujo de Trabajo Completo para Dataset
+
+### 📋 **Proceso de Creación de Dataset:**
+1. **Dibujar** → Crear contenido en la pizarra con colores optimizados
+2. **OCR (Opcional)** → Ver qué detecta automáticamente el sistema
+3. **Escribir significado** → Introducir interpretación real en textarea azul
+4. **Exportar** → Botón naranja guarda imagen + texto en CSV
+5. **Auto-limpieza** → Sistema limpia automáticamente para próxima muestra
+
+### 📊 **Estructura del Dataset Generado:**
+```
+E:\temp\whiteboard_dataset\
+├── whiteboard_dataset.csv        # Archivo principal
+│   ├── timestamp                 # Marca de tiempo ISO8601
+│   ├── image_filename            # nombre único del archivo
+│   ├── meaning_text              # Texto real escrito por usuario
+│   ├── ocr_text                  # Texto detectado por OCR (opcional)
+│   └── image_path                # Ruta relativa a la imagen
+└── images\
+    ├── whiteboard_1695484800000.png
+    ├── whiteboard_1695484801000.png
+    └── ...
+```
 
 ## 🌐 Compatibilidad
 

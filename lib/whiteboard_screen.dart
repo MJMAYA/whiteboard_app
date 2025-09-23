@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/foundation.dart';
 import 'draw_point.dart';
 import 'whiteboard_painter.dart';
 import 'widgets/ocr_text_display.dart';
 import 'widgets/color_palette.dart';
 import 'widgets/whiteboard_action_buttons.dart';
+import 'widgets/meaning_text_input.dart';
+import 'widgets/add_sample_button.dart';
+import 'widgets/dataset_export_button.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'dart:io';
@@ -22,6 +26,7 @@ class WhiteboardScreen extends StatefulWidget {
 class _WhiteboardScreenState extends State<WhiteboardScreen> {
   String? _figureMessage;
   String _recognizedText = ''; // Variable para almacenar texto OCR
+  String _meaningText = ''; // Variable para almacenar significado real
   double _lastPressure = 1.0;
   bool _showPressure = false;
   final GlobalKey _paintKey = GlobalKey();
@@ -35,6 +40,11 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
     Colors.green.shade700, // Verde oscuro - mejor contraste
     Colors.indigo.shade800, // Índigo - excelente para texto
   ];
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +62,34 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
             recognizedText: _recognizedText,
             onClear: () => setState(() => _recognizedText = ''),
           ),
+          MeaningTextInput(
+            meaningText: _meaningText,
+            onTextChanged: (text) => setState(() => _meaningText = text),
+            onClear: () => setState(() => _meaningText = ''),
+          ),
+          AddSampleButton(
+            boundaryKey: _boundaryKey,
+            meaningText: _meaningText,
+            recognizedText: _recognizedText,
+            points: _points,
+            onSampleAdded: () {
+              // Limpiar la pizarra después de agregar al dataset
+              setState(() {
+                _points.clear();
+                _recognizedText = '';
+                _meaningText = '';
+              });
+            },
+          ),
+          DatasetExportButton(),
         ],
       ),
       floatingActionButton: WhiteboardActionButtons(
-        onClear: () => setState(() => _points.clear()),
+        onClear: () => setState(() {
+          _points.clear();
+          _recognizedText = '';
+          _meaningText = '';
+        }),
         onTogglePressure: () => setState(() => _showPressure = !_showPressure),
         onRecognizeText: _recognizeTextFromWhiteboard,
         showPressure: _showPressure,
