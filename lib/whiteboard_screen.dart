@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'draw_point.dart';
 import 'whiteboard_painter.dart';
+import 'widgets/ocr_text_display.dart';
+import 'widgets/color_palette.dart';
+import 'widgets/whiteboard_action_buttons.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'dart:io';
@@ -18,6 +21,7 @@ class WhiteboardScreen extends StatefulWidget {
 
 class _WhiteboardScreenState extends State<WhiteboardScreen> {
   String? _figureMessage;
+  String _recognizedText = ''; // Variable para almacenar texto OCR
   double _lastPressure = 1.0;
   bool _showPressure = false;
   final GlobalKey _paintKey = GlobalKey();
@@ -38,189 +42,123 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
       appBar: AppBar(title: const Text('Pizarra Interactiva ws2')),
       body: Column(
         children: [
-          Expanded(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: RepaintBoundary(
-                    key: _boundaryKey,
-                    child: Listener(
-                      behavior: HitTestBehavior.translucent,
-                      onPointerDown: (event) {
-                        //print(
-                        //  '[DEBUG] PointerDown: pressure=${event.pressure}, position=${event.position}, device=${event.device}',
-                        //);
-                        setState(() {
-                          RenderBox? box =
-                              _paintKey.currentContext?.findRenderObject()
-                                  as RenderBox?;
-                          Offset point = box != null
-                              ? box.globalToLocal(event.position)
-                              : event.localPosition;
-                          double pressure = event.pressure;
-                          _lastPressure = pressure;
-                          double minStroke = 2.0;
-                          double maxStroke = 8.0;
-                          double normalized = pressure.clamp(0.0, 1.0);
-                          double stroke =
-                              minStroke + (maxStroke - minStroke) * normalized;
-                          _points.add(DrawPoint(point, _selectedColor, stroke));
-                        });
-                      },
-                      onPointerMove: (event) {
-                        // print(
-                        //   '[DEBUG] PointerMove: pressure=${event.pressure}, position=${event.position}, device=${event.device}',
-                        // );
-                        setState(() {
-                          RenderBox? box =
-                              _paintKey.currentContext?.findRenderObject()
-                                  as RenderBox?;
-                          Offset point = box != null
-                              ? box.globalToLocal(event.position)
-                              : event.localPosition;
-                          double pressure = event.pressure;
-                          if (pressure == 0.0) {
-                            pressure = _lastPressure;
-                          } else {
-                            _lastPressure = pressure;
-                          }
-                          double minStroke = 2.0;
-                          double maxStroke = 8.0;
-                          double normalized = pressure.clamp(0.0, 1.0);
-                          double stroke =
-                              minStroke + (maxStroke - minStroke) * normalized;
-                          _points.add(DrawPoint(point, _selectedColor, stroke));
-                        });
-                      },
-                      onPointerUp: (event) {
-                        setState(() {
-                          // Simplemente agregamos un separador null para terminar el trazo
-                          // Sin detección de cuadrados para optimizar OCR
-                          _points.add(null);
-                        });
-                      },
-                      child: CustomPaint(
-                        key: _paintKey,
-                        painter: WhiteboardPainter(_points),
-                        size: Size.infinite,
-                      ),
-                    ),
-                  ),
-                ),
-                if (_figureMessage != null)
-                  Positioned(
-                    top: 60,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _figureMessage!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (_showPressure)
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.black12),
-                      ),
-                      child: Text(
-                        'Presión: ${_lastPressure.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+          Expanded(flex: 3, child: _buildWhiteboardArea()),
+          ColorPalette(
+            colors: _colors,
+            selectedColor: _selectedColor,
+            onColorSelected: (color) => setState(() => _selectedColor = color),
           ),
-          Container(
-            color: Colors.grey[200],
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: _colors.map((color) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedColor = color;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _selectedColor == color
-                            ? Colors.black
-                            : Colors.transparent,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+          OcrTextDisplay(
+            recognizedText: _recognizedText,
+            onClear: () => setState(() => _recognizedText = ''),
           ),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            onPressed: () {
-              setState(() {
-                _points.clear();
-              });
-            },
-            tooltip: 'Limpiar pizarra',
-            child: const Icon(Icons.clear),
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton(
-            onPressed: () {
-              setState(() {
-                _showPressure = !_showPressure;
-              });
-            },
-            tooltip: _showPressure ? 'Ocultar presión' : 'Mostrar presión',
-            backgroundColor: Colors.blueGrey,
-            child: Icon(
-              _showPressure ? Icons.visibility_off : Icons.visibility,
-            ),
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton(
-            onPressed: _recognizeTextFromWhiteboard,
-            tooltip: 'Reconocer texto',
-            backgroundColor: Colors.green,
-            child: const Icon(Icons.text_fields),
-          ),
-        ],
+      floatingActionButton: WhiteboardActionButtons(
+        onClear: () => setState(() => _points.clear()),
+        onTogglePressure: () => setState(() => _showPressure = !_showPressure),
+        onRecognizeText: _recognizeTextFromWhiteboard,
+        showPressure: _showPressure,
       ),
     );
   }
+
+  Widget _buildWhiteboardArea() {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: RepaintBoundary(
+            key: _boundaryKey,
+            child: Listener(
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: _handlePointerDown,
+              onPointerMove: _handlePointerMove,
+              onPointerUp: _handlePointerUp,
+              child: CustomPaint(
+                key: _paintKey,
+                painter: WhiteboardPainter(_points),
+                size: Size.infinite,
+              ),
+            ),
+          ),
+        ),
+        if (_figureMessage != null) _buildStatusMessage(),
+        if (_showPressure) _buildPressureIndicator(),
+      ],
+    );
+  }
+
+  // Handlers de eventos de puntero
+  void _handlePointerDown(PointerDownEvent event) {
+    setState(() {
+      final point = _getLocalPoint(event.position);
+      final stroke = _calculateStroke(event.pressure);
+      _points.add(DrawPoint(point, _selectedColor, stroke));
+    });
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    setState(() {
+      final point = _getLocalPoint(event.position);
+      final pressure = event.pressure == 0.0 ? _lastPressure : event.pressure;
+      _lastPressure = pressure;
+      final stroke = _calculateStroke(pressure);
+      _points.add(DrawPoint(point, _selectedColor, stroke));
+    });
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    setState(() => _points.add(null)); // Separador de trazos
+  }
+
+  // Métodos auxiliares
+  Offset _getLocalPoint(Offset globalPosition) {
+    final box = _paintKey.currentContext?.findRenderObject() as RenderBox?;
+    return box?.globalToLocal(globalPosition) ?? globalPosition;
+  }
+
+  double _calculateStroke(double pressure) {
+    const double minStroke = 2.0, maxStroke = 8.0;
+    final normalized = pressure.clamp(0.0, 1.0);
+    return minStroke + (maxStroke - minStroke) * normalized;
+  }
+
+  // Widgets de UI
+  Widget _buildStatusMessage() => Positioned(
+    top: 60,
+    left: 0,
+    right: 0,
+    child: Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          _figureMessage!,
+          style: const TextStyle(color: Colors.white, fontSize: 18),
+        ),
+      ),
+    ),
+  );
+
+  Widget _buildPressureIndicator() => Positioned(
+    top: 16,
+    right: 16,
+    child: Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Text(
+        'Presión: ${_lastPressure.toStringAsFixed(2)}',
+        style: const TextStyle(fontSize: 16),
+      ),
+    ),
+  );
 
   Future<void> _recognizeTextFromWhiteboard() async {
     try {
@@ -254,7 +192,6 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
           'Connection': 'keep-alive',
           'User-Agent': 'FlutterWebClient',
         });
-        print('parseada url');
         request.files.add(
           http.MultipartFile.fromBytes(
             'the_file',
@@ -262,10 +199,8 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
             filename: 'ocr_temp.png',
           ),
         );
-        print('antes de enviar');
         var response = await request.send();
         if (response.statusCode == 200) {
-          print('respuesta correcta');
           final respStr = await response.stream.bytesToString();
           // Parsear JSON para obtener el campo 'result'
           try {
@@ -275,7 +210,6 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
             recognizedText = jsonResp.containsKey('result')
                 ? jsonResp['result'].toString()
                 : 'No se detectó texto';
-            print('Resultado: $recognizedText');
           } catch (e) {
             recognizedText = 'No se detectó texto';
           }
@@ -300,7 +234,6 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
           final result = RegExp(
             r'"result"\s*:\s*"([^"]*)"',
           ).firstMatch(respStr);
-          print('Resultado: $result');
           recognizedText = result != null
               ? result.group(1)!
               : 'No se detectó texto';
@@ -311,11 +244,11 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
       }
 
       setState(() {
-        _figureMessage = 'Texto detectado: $recognizedText';
+        _recognizedText = recognizedText;
       });
     } catch (e) {
       setState(() {
-        _figureMessage = 'Error al reconocer texto: $e';
+        _recognizedText = 'Error al reconocer texto: $e';
       });
     }
   }

@@ -6,71 +6,73 @@ Una aplicación de pizarra digital inteligente desarrollada con Flutter que perm
 
 ### 🎨 Dibujo Libre
 - **Dibujo con sensibilidad a la presión**: El grosor del trazo se ajusta automáticamente según la presión aplicada (2.0 - 8.0 píxeles)
-- **Paleta de colores**: 10 colores predefinidos disponibles (negro, rojo, verde, azul, naranja, púrpura, marrón, rosa, amarillo, cian)
-- **Interfaz intuitiva**: Selector de color circular en la parte inferior de la pantalla
+- **Paleta de colores optimizada para OCR**: 5 colores de alta legibilidad (negro, azul oscuro, rojo oscuro, verde oscuro, índigo)
+- **Interfaz modular**: Componentes organizados en widgets reutilizables
 
-### 🔲 Detección Inteligente de Formas
-- **Reconocimiento automático de cuadrados**: El sistema detecta cuadrados dibujados a mano libre
-- **Algoritmo de detección**: 
-  - Analiza trazos de al menos 20 puntos
-  - Verifica proporción cuadrada (diferencia de ancho/alto < 15px)
-  - Confirma que el 70% de los puntos estén en el perímetro
-  - Tamaño mínimo de 30x30 píxeles
-- **Feedback visual**: Notificación "¡Cuadrado detectado!" cuando se identifica una forma
-- **Renderizado perfecto**: Los cuadrados detectados se muestran como rectángulos perfectos
-
-### 📝 Reconocimiento de Texto (OCR)
+### � Reconocimiento de Texto (OCR) con Textarea
 - **Captura de pantalla**: Convierte el contenido de la pizarra en imagen PNG
-- **Integración con servicio OCR**: Envía la imagen a un servidor local (localhost:1688)
+- **Textarea integrado**: Área dedicada en la parte inferior para mostrar el texto reconocido
+- **Gestión de texto**: Botón para limpiar el contenido del textarea
+- **Feedback visual**: Mensajes de estado para indicar el progreso del OCR
 - **Compatibilidad multiplataforma**: 
   - **Web**: Envío directo de bytes via multipart
   - **Desktop/Móvil**: Guardado temporal de archivos
-- **Procesamiento de resultados**: Muestra el texto reconocido en pantalla
 
 ### 🛠️ Herramientas de Control
 
-#### Botones Flotantes:
-1. **Limpiar Pizarra** (🗑️): Borra todos los trazos y formas detectadas
+#### Botones Flotantes Organizados:
+1. **Limpiar Pizarra** (🗑️): Borra todos los trazos dibujados
 2. **Monitor de Presión** (👁️): Activa/desactiva indicador de presión en tiempo real
-3. **Reconocimiento de Texto** (📝): Ejecuta OCR sobre el contenido actual
+3. **Reconocimiento de Texto** (📝): Ejecuta OCR y muestra resultado en textarea
 
-### 💻 Indicadores en Pantalla
-- **Monitor de presión**: Muestra valor actual de presión (0.00-1.00) en esquina superior derecha
-- **Mensajes de estado**: Notificaciones temporales para detección de formas y resultados de OCR
-- **Interfaz responsiva**: Se adapta a diferentes tamaños de pantalla
+### 💻 Interfaz Mejorada
+- **Área de dibujo expandida**: Ocupa la mayor parte de la pantalla
+- **Textarea responsivo**: 120px de altura fija con scroll interno
+- **Paleta de colores**: Selector visual mejorado con efectos de selección
+- **Organización modular**: Código separado en widgets especializados
 
 ## 🏗️ Arquitectura del Proyecto
 
 ### Estructura de Archivos
 ```
 lib/
-├── main.dart              # Punto de entrada de la aplicación
-├── whiteboard_screen.dart # Pantalla principal con toda la lógica
-├── whiteboard_painter.dart# CustomPainter para renderizado de trazos
-├── draw_point.dart        # Modelo para puntos de dibujo
-└── detected_square.dart   # Modelo para cuadrados detectados
+├── main.dart                    # Punto de entrada de la aplicación
+├── whiteboard_screen.dart       # Pantalla principal (refactorizada y optimizada)
+├── whiteboard_painter.dart      # CustomPainter para renderizado de trazos
+├── draw_point.dart              # Modelo para puntos de dibujo
+└── widgets/                     # Widgets modulares reutilizables
+    ├── ocr_text_display.dart    # Textarea para mostrar texto OCR
+    ├── color_palette.dart       # Selector de colores optimizado
+    └── whiteboard_action_buttons.dart # Botones flotantes organizados
 ```
 
 ### Clases Principales
 
-#### `WhiteboardScreen`
-- **Estado**: Maneja puntos de dibujo, cuadrados detectados, color seleccionado
-- **Eventos de puntero**: Captura PointerDown, PointerMove, PointerUp
-- **Detección de formas**: Algoritmo de análisis geométrico
-- **Integración OCR**: Cliente HTTP para servicio de reconocimiento
+#### `WhiteboardScreen` (Refactorizada)
+- **Arquitectura modular**: Dividida en métodos especializados
+- **Estado optimizado**: Variables específicas para texto OCR
+- **Handlers especializados**: Métodos dedicados para eventos de puntero
+- **UI organizada**: Widgets separados por responsabilidad
 
-#### `WhiteboardPainter`
-- **Renderizado personalizado**: Dibuja líneas conectadas entre puntos
-- **Estilos dinámicos**: Aplica color y grosor específico a cada trazo
-- **Formas detectadas**: Renderiza cuadrados perfectos superpuestos
+#### `OcrTextDisplay`
+- **Textarea dedicado**: Área específica para mostrar texto reconocido
+- **Interfaz limpia**: Header con título y botón de limpieza
+- **Scroll automático**: Manejo de texto largo
+- **Estados visuales**: Diferentes estilos para texto vacío y con contenido
 
-#### `DrawPoint`
-- **Propiedades**: Offset (posición), Color, strokeWidth (grosor)
-- **Sensibilidad**: Grosor basado en presión del dispositivo de entrada
+#### `ColorPalette`
+- **Selector optimizado**: Paleta de colores específica para OCR
+- **Efectos visuales**: Indicación clara de color seleccionado
+- **Responsive**: Se adapta al contenido disponible
 
-#### `DetectedSquare`
-- **Geometría**: Rect (rectángulo) y Color
-- **Renderizado**: Se dibuja como contorno perfecto sobre trazos originales
+#### `WhiteboardActionButtons`
+- **Botones organizados**: Conjunto de acciones principales
+- **Tooltips informativos**: Ayuda contextual para cada acción
+- **Temas consistentes**: Colores apropiados para cada función
+
+#### `WhiteboardPainter` (Simplificado)
+- **Renderizado puro**: Solo maneja dibujo de trazos
+- **Optimizado**: Código limpio sin funcionalidades no utilizadas
 
 ## 🔧 Dependencias
 
