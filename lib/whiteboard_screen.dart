@@ -5,10 +5,10 @@ import 'draw_point.dart';
 import 'whiteboard_painter.dart';
 import 'widgets/ocr_text_display.dart';
 import 'widgets/color_palette.dart';
-import 'widgets/whiteboard_action_buttons.dart';
 import 'widgets/meaning_text_input.dart';
 import 'widgets/add_sample_button.dart';
 import 'widgets/dataset_export_button.dart';
+import 'widgets/whiteboard_toolbar.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'dart:io';
@@ -52,7 +52,23 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
       appBar: AppBar(title: const Text('Pizarra Interactiva ws2')),
       body: Column(
         children: [
+          // Nueva barra de herramientas arriba - MÁS ACCESIBLE
+          WhiteboardToolbar(
+            onClear: () => setState(() {
+              _points.clear();
+              _recognizedText = '';
+              _meaningText = '';
+            }),
+            onRecognizeText: _recognizeTextFromWhiteboard,
+            onTogglePressure: () =>
+                setState(() => _showPressure = !_showPressure),
+            showPressure: _showPressure,
+          ),
+
+          // Área de pizarra
           Expanded(flex: 3, child: _buildWhiteboardArea()),
+
+          // Controles inferiores
           ColorPalette(
             colors: _colors,
             selectedColor: _selectedColor,
@@ -84,16 +100,7 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
           DatasetExportButton(),
         ],
       ),
-      floatingActionButton: WhiteboardActionButtons(
-        onClear: () => setState(() {
-          _points.clear();
-          _recognizedText = '';
-          _meaningText = '';
-        }),
-        onTogglePressure: () => setState(() => _showPressure = !_showPressure),
-        onRecognizeText: _recognizeTextFromWhiteboard,
-        showPressure: _showPressure,
-      ),
+      // Removimos el floatingActionButton ya que ahora está arriba
     );
   }
 

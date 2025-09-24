@@ -29,7 +29,7 @@ class DatasetExporter {
 
       // Para web, mostramos información de cómo acceder al dataset
       if (kDebugMode) {
-        print('Muestra ${_sampleCounter} agregada al dataset en memoria.');
+        print('Muestra $_sampleCounter agregada al dataset en memoria.');
         print('Significado: $meaningText');
         print('OCR: ${recognizedText ?? "N/A"}');
         print('Para exportar, use el botón de exportar dataset.');
@@ -58,7 +58,7 @@ class DatasetExporter {
       final escapedOcr = _escapeCsvField(sample['recognizedText'] as String);
 
       buffer.writeln(
-        '${sample['timestamp']},${sample['imageName']},${escapedMeaning},${escapedOcr},${sample['imageName']}',
+        '${sample['timestamp']},${sample['imageName']},$escapedMeaning,$escapedOcr,${sample['imageName']}',
       );
     }
 

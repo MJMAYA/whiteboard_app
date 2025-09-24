@@ -4,8 +4,7 @@ import '../services/dataset_exporter.dart';
 class DatasetExportButton extends StatefulWidget {
   final VoidCallback? onExportComplete;
 
-  const DatasetExportButton({Key? key, this.onExportComplete})
-    : super(key: key);
+  const DatasetExportButton({super.key, this.onExportComplete});
 
   @override
   _DatasetExportButtonState createState() => _DatasetExportButtonState();

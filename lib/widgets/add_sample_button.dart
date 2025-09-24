@@ -12,13 +12,13 @@ class AddSampleButton extends StatefulWidget {
   final VoidCallback? onSampleAdded;
 
   const AddSampleButton({
-    Key? key,
+    super.key,
     required this.boundaryKey,
     required this.meaningText,
     required this.recognizedText,
     required this.points,
     this.onSampleAdded,
-  }) : super(key: key);
+  });
 
   @override
   _AddSampleButtonState createState() => _AddSampleButtonState();
