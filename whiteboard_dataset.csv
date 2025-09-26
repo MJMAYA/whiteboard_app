@@ -1,0 +1,6 @@
+filename,text,x,y,width,height
+drawing_001.png,"x = 2y + 5",100,150,200,25
+drawing_002.png,"∫ f(x)dx = F(x) + C",50,75,150,30
+drawing_003.png,"A → B → C",25,100,300,20
+drawing_004.png,"sin(θ) + cos(θ) = 1",75,200,180,22
+drawing_005.png,"lim(x→∞) f(x)",120,80,160,28
